@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Actorchat</title>
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, system-ui, sans-serif; }
+        body {
+            background: #0d0d0d; color: white; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        h1 { color: #d49b6e; font-size: 28px; font-family: serif; text-align: center; }
+        .sub { color: #888; font-family: serif; text-align: center; margin-top: -5px; margin-bottom: 20px; }
+        .chat-box { width: 100%; max-width: 600px; background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #444; }
+        #messages { height: 350px; overflow-y: auto; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .msg { margin-bottom: 12px; border-bottom: 1px solid #2a2a2a; padding-bottom: 8px; }
+        .name { color: #d49b6e; font-weight: bold; }
+        .time { color: #666; font-size: 11px; margin-left: 10px; }
+        .text { color: #e0e0e0; margin-top: 4px; }
+        input, button { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #444; background: #0d0d0d; color: white; font-size: 16px; }
+        input:focus { border-color: #d49b6e; outline: none; }
+        button { background: #d49b6e; color: #0d0d0d; font-weight: bold; border: none; cursor: pointer; }
+        button:hover { opacity: 0.9; }
+        .back { color: #d49b6e; text-decoration: none; text-align: center; display: block; margin-top: 20px; font-family: serif; }
+    </style>
+</head>
+<body>
+    <h1>Actorchat</h1>
+    <div class="sub">The Conservatory of Actors — Cast Chat</div>
+
+    <div class="chat-box">
+        <div id="messages"><div style="color:#666; text-align:center; margin-top:20px;">Loading messages...</div></div>
+        <input type="text" id="nameInput" placeholder="Your name">
+        <input type="text" id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <a href="https://practicetester.harrisen-wang.workers.dev" class="back">← Back to Tickets</a>
+
+    <script>
+        const API_URL = "https://fancy-firefly-495e.harrisen-wang.workers.dev";
+
+        async function loadMessages() {
+            try {
+                const res = await fetch(API_URL + '/chat');
+                const msgs = await res.json();
+                const c = document.getElementById('messages');
+                if (msgs.length === 0) { c.innerHTML = '<div style="color:#666; text-align:center; margin-top:20px;">No messages yet.</div>'; return; }
+                c.innerHTML = msgs.map(m => `
+                    <div class="msg">
+                        <div><span class="name">${m.name}</span><span class="time">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div>
+                        <div class="text">${m.message}</div>
+                    </div>
+                `).join('');
+            } catch(e) { document.getElementById('messages').innerHTML = '<div style="color:#ff4444; text-align:center;">Error loading chat.</div>'; }
+        }
+
+        async function sendMessage() {
+            const name = document.getElementById('nameInput').value.trim();
+            const msg = document.getElementById('msgInput').value.trim();
+            if (!name || !msg) return;
+            document.getElementById('msgInput').value = '';
+            await fetch(API_URL + '/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, message: msg }) });
+            loadMessages();
+        }
+        loadMessages();
+        setInterval(loadMessages, 3000);
+    </script>
+</body>
+</html>
